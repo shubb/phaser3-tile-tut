@@ -1,39 +1,62 @@
 import Phaser from 'phaser'
 
+const MARIO_TILES_KEY = 'mario-tiles'
+const CATASTROPHI_TILES_KEY = 'catastrophi-tiles'
+const CATASTROPHI_MAP_KEY = 'catastrophi-tiles'
+
 export default class HelloWorldScene extends Phaser.Scene
 {
 	constructor()
 	{
-		super('hello-world')
+        super('hello-world')
+        this.map = undefined
+        this.camera_controls = undefined
 	}
 
 	preload()
     {
-        this.load.setBaseURL('http://labs.phaser.io')
-
-        this.load.image('sky', 'assets/skies/space3.png')
-        this.load.image('logo', 'assets/sprites/phaser3-logo.png')
-        this.load.image('red', 'assets/particles/red.png')
+        this.load.image(MARIO_TILES_KEY, 'assets/tilesets/super-mario-tiles.png')
+        this.load.image(CATASTROPHI_TILES_KEY, 'assets/tilesets/catastrophi_tiles_16_blue.png')
+        this.load.tilemapCSV(CATASTROPHI_MAP_KEY, 'assets/tilemaps/catastrophi_level3.csv')
+        
     }
 
     create()
     {
-        this.add.image(400, 300, 'sky')
+        this.map = this.createMap()
+        this.camera_controls = this.createCamera()
+    }
 
-        const particles = this.add.particles('red')
+    createMap()
+    {
+        // When loading from an array, make sure to specify the tileWidth and tileHeight
+        const map = this.make.tilemap({ key: CATASTROPHI_MAP_KEY, tileWidth: 16, tileHeight: 16})
+        const tiles = map.addTilesetImage(CATASTROPHI_TILES_KEY)
+        const layer = map.createStaticLayer(0, tiles, 0, 0)
+        return map
+    }
 
-        const emitter = particles.createEmitter({
-            speed: 100,
-            scale: { start: 1, end: 0 },
-            blendMode: 'ADD'
+    createCamera()
+    {
+        const camera = this.cameras.main
+        const cursors = this.input.keyboard.createCursorKeys()
+        camera.setBounds(0,0, this.map.widthInPixels, this.map.heightInPixels)
+
+        const controls = new Phaser.Cameras.Controls.FixedKeyControl({
+            camera: camera,
+            left: cursors.left,
+            right: cursors.right,
+            up: cursors.up,
+            down: cursors.down,
+            speed: 0.5
         })
 
-        const logo = this.physics.add.image(400, 100, 'logo')
-
-        logo.setVelocity(100, 200)
-        logo.setBounce(1, 1)
-        logo.setCollideWorldBounds(true)
-
-        emitter.startFollow(logo)
+        return controls
     }
+
+    update(time, delta)
+    {
+        this.camera_controls.update(delta)
+    }
+
 }
